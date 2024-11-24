@@ -167,19 +167,18 @@ func (r *homePageRepository) GetByIdProduct(id int) (*model.ProductID, error) {
 		return nil, err
 	}
 
-	// Parse kolom images
 	if len(imagesJSON) > 0 {
 		if err := json.Unmarshal(imagesJSON, &product.Images); err != nil {
 			r.log.Error("Repository: failed to unmarshal images JSON", zap.Error(err))
 			return nil, err
 		}
 	}
-	if len(variantJSON) > 0{
+	if len(variantJSON) > 0 {
 		if err := json.Unmarshal(variantJSON, &product.Variant); err != nil {
 			r.log.Error("Repository: failed to unmarshal variant JSON", zap.Error(err))
 			return nil, err
 		}
-	} 
+	}
 
 	return &product, nil
 }
@@ -371,19 +370,19 @@ func (r *homePageRepository) AddWishlist(wishlist model.Wishlist) error {
 }
 
 func (r *homePageRepository) DeleteWishlist(id, userID int) error {
-    query := `DELETE FROM wishlists WHERE id = $1 AND user_id = $2`
-    res, err := r.db.Exec(query, id, userID)
-    if err != nil {
-        r.log.Error("Repository: Error executing query", zap.Error(err))
-        return err
-    }
+	query := `DELETE FROM wishlists WHERE id = $1 AND user_id = $2`
+	res, err := r.db.Exec(query, id, userID)
+	if err != nil {
+		r.log.Error("Repository: Error executing query", zap.Error(err))
+		return err
+	}
 
-    rowsAffected, _ := res.RowsAffected()
-    if rowsAffected == 0 {
-        r.log.Warn("Repository: No wishlist found for the given userID and id")
-        return fmt.Errorf("no wishlist found")
-    }
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		r.log.Warn("Repository: No wishlist found for the given userID and id")
+		return fmt.Errorf("no wishlist found")
+	}
 
-    r.log.Info("Repository: Wishlist deleted successfully", zap.Int("id", id), zap.Int("userID", userID))
-    return nil
+	r.log.Info("Repository: Wishlist deleted successfully", zap.Int("id", id), zap.Int("userID", userID))
+	return nil
 }

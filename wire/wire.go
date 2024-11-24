@@ -10,9 +10,9 @@ import (
 	"ecommerce/router"
 	"ecommerce/service"
 	"ecommerce/util"
+	"log"
 	"os"
 	"strconv"
-	"log"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/wire"
@@ -92,13 +92,13 @@ func InitializeRouterHandler() (*chi.Mux, error) {
 		handler.NewAuthHandler,
 
 		repository.NewHomePageRepository,
-        service.NewHomePageService,
-        handler.NewHomePageHandler,
+		service.NewHomePageService,
+		handler.NewHomePageHandler,
 
 		repository.NewCheckoutRepository,
 		service.NewCheckoutService,
 		handler.NewCheckoutHandler,
-		
+
 		router.NewRouter,
 	)
 	return nil, nil

@@ -54,11 +54,12 @@ func NewRouter(checkoutHandler *handler.CheckoutHandler, homePageHandler *handle
 			r.With(authMiddleware.Middleware).Get("/address", authHandler.GetAllAddressHandler)
 			r.With(authMiddleware.Middleware).Get("/detail-user", authHandler.GetDetailUserHandler)
 			r.With(authMiddleware.Middleware).Put("/update-user", authHandler.UpdateUserHandler)
+			r.With(authMiddleware.Middleware).Put("/address", authHandler.UpdateAddressUserHandler)
+			r.With(authMiddleware.Middleware).Post("/address-default", authHandler.SetDefaultAddressUserHandler)
 			r.With(authMiddleware.Middleware).Post("/address", authHandler.CreateAddressHandler)
 
 		})
 	})
-
 
 	r.Group(func(r chi.Router) {
 		r.Route("/api/products", func(r chi.Router) {
@@ -67,7 +68,7 @@ func NewRouter(checkoutHandler *handler.CheckoutHandler, homePageHandler *handle
 			r.Get("/weekly-promotion", homePageHandler.GetAllWeeklyPromotionProductsHandler)
 			r.Get("/recomments", homePageHandler.GetAllRecommentsProductsHandler)
 			r.Get("/{id}", homePageHandler.GetByIdProductHandler)
-			
+
 			r.With(authMiddleware.Middleware).Get("/carts", checkoutHandler.GetAllCartHandler)
 			r.With(authMiddleware.Middleware).Post("/carts", checkoutHandler.AddCartHandler)
 			r.With(authMiddleware.Middleware).Post("/orders", checkoutHandler.CreateOrderHandler)

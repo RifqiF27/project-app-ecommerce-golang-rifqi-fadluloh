@@ -74,7 +74,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "85f010d2eff98b6bdf335325418f8be2bf8ca5cdfea1a3694db17dcf208e6ad2",
+									"value": "a349609f1ded9a971d8d98964739ddf514beb7a12a69bdc9f5e8318bc96921da",
 									"type": "string"
 								}
 							]
@@ -120,7 +120,7 @@
 							"query": [
 								{
 									"key": "page",
-									"value": "1",
+									"value": "2",
 									"disabled": true
 								},
 								{
@@ -701,7 +701,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "39c947708674c2474a2b55cb72683d864381ce7686f7842f3d025f12a2197825",
+									"value": "a349609f1ded9a971d8d98964739ddf514beb7a12a69bdc9f5e8318bc96921da",
 									"type": "string"
 								}
 							]
@@ -710,7 +710,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n        \"name\": \"Bob Gold\",\r\n        \"email\": \"bob.gold@example.com\",\r\n        \"phone\": \"1231231234\",\r\n        \"password\": \"1234567890\",\r\n        \"address\": [\r\n            \"111 Maple St, Citycenter\",\r\n            \"122 Willow St, Greenfield\"\r\n        ]\r\n    }",
+							"raw": "{\r\n        \"name\": \"Bob Gold\",\r\n        \"email\": \"bob.gold@example.com\",\r\n        \"old_password\": \"password101\",\r\n        \"new_password\": \"1234567890\"\r\n    }",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -731,6 +731,43 @@
 					"response": []
 				},
 				{
+					"name": "Update Address User",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "a349609f1ded9a971d8d98964739ddf514beb7a12a69bdc9f5e8318bc96921da",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n        \"address\": [\r\n            \"111 Maple St, Citycenter\",\r\n            \"122 Willow St, Greenfield\"\r\n        ]\r\n    }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/account/address",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"account",
+								"address"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Create Address",
 					"request": {
 						"auth": {
@@ -738,7 +775,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "39c947708674c2474a2b55cb72683d864381ce7686f7842f3d025f12a2197825",
+									"value": "a349609f1ded9a971d8d98964739ddf514beb7a12a69bdc9f5e8318bc96921da",
 									"type": "string"
 								}
 							]
@@ -748,6 +785,46 @@
 						"body": {
 							"mode": "raw",
 							"raw": "{\r\n  \"new_address\": \"456 New Address, City, Country\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}api/account/address",
+							"host": [
+								"{{base_url}}api"
+							],
+							"path": [
+								"account",
+								"address"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Address",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "a349609f1ded9a971d8d98964739ddf514beb7a12a69bdc9f5e8318bc96921da",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "",
 							"options": {
 								"raw": {
 									"language": "json"

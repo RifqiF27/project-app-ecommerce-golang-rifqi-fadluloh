@@ -17,7 +17,9 @@ type AuthRepository interface {
 	DeleteSession(token string) error
 	GetAllAddress(id int) ([]*model.User, error)
 	GetDetailUser(id int) (*model.User, error)
-	UpdateUser(userID int, name, email, phone, password string, address []string) (*model.User, error)
+	UpdateUser(userID int, name, email, oldPassword, newPassword string) (*model.User, error)
+	UpdateAddressUser(userID int, address []string) (*model.User, error)
+	SetDefaultAddress(userID int, addressIndex int) (*model.User, error)
 	CreateAddress(userID int, newAddress string) (*model.User, error)
 }
 
@@ -147,132 +149,176 @@ func (r *authRepository) GetAllAddress(id int) ([]*model.User, error) {
 	return results, nil
 }
 func (r *authRepository) GetDetailUser(id int) (*model.User, error) {
-    var addressJSON []byte
-    var user model.User
+	var addressJSON []byte
+	var user model.User
 
-    err := r.DB.QueryRow(`SELECT name, email, phone, address FROM users WHERE id = $1`, id).
-        Scan(&user.Name, &user.Email, &user.Phone, &addressJSON)
-    if err != nil {
-        if err == sql.ErrNoRows {
-            r.Log.Warn("Repository: User not found", zap.Int("id", id))
-            return nil, fmt.Errorf("user with id %d not found", id)
-        }
-        r.Log.Error("Repository: Failed to query user", zap.Error(err))
-        return nil, err
-    }
+	err := r.DB.QueryRow(`SELECT name, email, phone, address FROM users WHERE id = $1`, id).
+		Scan(&user.Name, &user.Email, &user.Phone, &addressJSON)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			r.Log.Warn("Repository: User not found", zap.Int("id", id))
+			return nil, fmt.Errorf("user with id %d not found", id)
+		}
+		r.Log.Error("Repository: Failed to query user", zap.Error(err))
+		return nil, err
+	}
 	r.Log.Info("Repository: Executing query", zap.Int("user_id", id))
 
+	if len(addressJSON) > 0 {
+		if err := json.Unmarshal(addressJSON, &user.Address); err != nil {
+			r.Log.Error("Repository: Failed to unmarshal address JSON", zap.String("address_json", string(addressJSON)), zap.Error(err))
+			return nil, fmt.Errorf("invalid address format for user id %d: %w", id, err)
+		}
+	}
 
-    if len(addressJSON) > 0 {
-        if err := json.Unmarshal(addressJSON, &user.Address); err != nil {
-            r.Log.Error("Repository: Failed to unmarshal address JSON", zap.String("address_json", string(addressJSON)), zap.Error(err))
-            return nil, fmt.Errorf("invalid address format for user id %d: %w", id, err)
-        }
-    }
-
-    r.Log.Debug("Repository: Retrieved user details", zap.Any("user", user))
-    return &user, nil
+	r.Log.Debug("Repository: Retrieved user details", zap.Any("user", user))
+	return &user, nil
 }
 
-func (r *authRepository) UpdateUser(userID int, name, email, phone, password string, address []string) (*model.User, error) {
-    r.Log.Debug("Repository: Updating user details", zap.Int("userID", userID), zap.String("name", name), zap.String("email", email), zap.String("phone", phone), zap.Any("address", address))
+func (r *authRepository) UpdateUser(userID int, name, email, oldPassword, newPassword string) (*model.User, error) {
+	r.Log.Debug("Repository: Updating user details", zap.Int("userID", userID), zap.String("name", name), zap.String("email", email))
 
-    // Serialize the Address field into JSON
-    addressJSON, err := json.Marshal(address)
-    if err != nil {
-        r.Log.Error("Repository: Failed to marshal address JSON", zap.Error(err))
-        return nil, fmt.Errorf("failed to serialize address: %w", err)
-    }
+	var storedPassword string
+	err := r.DB.QueryRow(`SELECT password FROM users WHERE id = $1`, userID).Scan(&storedPassword)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			r.Log.Error("Repository: User not found", zap.Int("userID", userID))
+			return nil, fmt.Errorf("user not found")
+		}
+		r.Log.Error("Repository: Failed to fetch user password", zap.Error(err))
+		return nil, fmt.Errorf("failed to fetch user password: %w", err)
+	}
 
-    // Update query
-    query := `
+	if oldPassword != storedPassword {
+		r.Log.Error("Repository: Incorrect old password", zap.Int("userID", userID))
+		return nil, fmt.Errorf("incorrect old password")
+	}
+
+	query := `
         UPDATE users
-        SET name = $1, email = $2, phone = $3, address = $4, password = $5, updated_at = NOW()
-        WHERE id = $6
-        RETURNING id, name, email, phone, address, password
+        SET name = $1, email = $2, password = $3, updated_at = NOW()
+        WHERE id = $4
+        RETURNING id, name, email, password
     `
 
-    // Execute the query and scan the updated user
-    var updatedUser model.User
-    err = r.DB.QueryRow(query, name, email, phone, addressJSON, password, userID).Scan(
-        &updatedUser.ID,
-        &updatedUser.Name,
-        &updatedUser.Email,
-        &updatedUser.Phone,
-        &addressJSON,
+	var updatedUser model.User
+	err = r.DB.QueryRow(query, name, email, newPassword, userID).Scan(
+		&updatedUser.ID,
+		&updatedUser.Name,
+		&updatedUser.Email,
 		&updatedUser.Password,
-    )
-    if err != nil {
-        r.Log.Error("Repository: Failed to update user", zap.Error(err))
-        return nil, fmt.Errorf("failed to update user: %w", err)
-    }
+	)
+	if err != nil {
+		r.Log.Error("Repository: Failed to update user", zap.Error(err))
+		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
 
-    // Deserialize the JSON address field back into the struct
-    if err := json.Unmarshal(addressJSON, &updatedUser.Address); err != nil {
-        r.Log.Error("Repository: Failed to unmarshal address JSON", zap.Error(err))
-        return nil, fmt.Errorf("failed to deserialize address: %w", err)
-    }
+	r.Log.Debug("Repository: User details updated successfully", zap.Int("userID", updatedUser.ID))
+	return &updatedUser, nil
+}
 
-    r.Log.Debug("Repository: User details updated successfully", zap.Int("userID", updatedUser.ID))
-    return &updatedUser, nil
+func (r *authRepository) UpdateAddressUser(userID int, address []string) (*model.User, error) {
+	r.Log.Debug("Repository: Updating user details", zap.Int("userID", userID), zap.Any("address", address))
+
+	addressJSON, err := json.Marshal(address)
+	if err != nil {
+		r.Log.Error("Repository: Failed to marshal address JSON", zap.Error(err))
+		return nil, fmt.Errorf("failed to serialize address: %w", err)
+	}
+
+	query := `
+        UPDATE users
+        SET address = $1, updated_at = NOW()
+        WHERE id = $2
+        RETURNING id, address
+    `
+
+	var updatedUser model.User
+	err = r.DB.QueryRow(query, addressJSON, userID).Scan(
+		&updatedUser.ID,
+		&addressJSON,
+	)
+	if err != nil {
+		r.Log.Error("Repository: Failed to update user", zap.Error(err))
+		return nil, fmt.Errorf("failed to update user: %w", err)
+	}
+
+	if err := json.Unmarshal(addressJSON, &updatedUser.Address); err != nil {
+		r.Log.Error("Repository: Failed to unmarshal address JSON", zap.Error(err))
+		return nil, fmt.Errorf("failed to deserialize address: %w", err)
+	}
+
+	r.Log.Debug("Repository: User details updated successfully", zap.Int("userID", updatedUser.ID))
+	return &updatedUser, nil
+}
+
+func (r *authRepository) SetDefaultAddress(userID int, addressIndex int) (*model.User, error) {
+	var defaultAddress string
+
+	addressQuery := `
+        SELECT COALESCE(address->>$2, address->>0) AS default_address
+        FROM users 
+        WHERE id = $1
+    `
+
+	err := r.DB.QueryRow(addressQuery, userID, addressIndex).Scan(&defaultAddress)
+	if err != nil {
+		r.Log.Error("Repository: failed to fetch address", zap.Error(err))
+		return nil, fmt.Errorf("failed to fetch address at index %d: %w", addressIndex, err)
+	}
+
+	response := &model.User{
+		DefaultAddress: defaultAddress,
+	}
+
+	return response, nil
 }
 
 func (r *authRepository) CreateAddress(userID int, newAddress string) (*model.User, error) {
-    // Ambil alamat yang ada
-    var addressJSON []byte
-    err := r.DB.QueryRow(`SELECT address FROM users WHERE id = $1`, userID).Scan(&addressJSON)
-    if err != nil {
-        if err == sql.ErrNoRows {
-            // Jika tidak ada data alamat, kita akan buat array kosong
-            addressJSON = []byte("[]")
-        } else {
-            return nil, fmt.Errorf("failed to fetch user address: %w", err)
-        }
-    }
 
-    // Unmarshal JSON ke dalam array alamat
-    var address []string
-    if len(addressJSON) > 0 {
-        if err := json.Unmarshal(addressJSON, &address); err != nil {
-            return nil, fmt.Errorf("failed to unmarshal address JSON: %w", err)
-        }
-    }
+	var addressJSON []byte
+	err := r.DB.QueryRow(`SELECT address FROM users WHERE id = $1`, userID).Scan(&addressJSON)
+	if err != nil {
+		if err == sql.ErrNoRows {
 
-    // Tambahkan alamat baru ke array
-    address = append(address, newAddress)
+			addressJSON = []byte("[]")
+		} else {
+			return nil, fmt.Errorf("failed to fetch user address: %w", err)
+		}
+	}
 
-    // Serialize kembali address ke JSON
-    addressJSON, err = json.Marshal(address)
-    if err != nil {
-        return nil, fmt.Errorf("failed to marshal address: %w", err)
-    }
+	var address []string
+	if len(addressJSON) > 0 {
+		if err := json.Unmarshal(addressJSON, &address); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal address JSON: %w", err)
+		}
+	}
 
-    // Update alamat di database
-    query := `
+	address = append(address, newAddress)
+
+	addressJSON, err = json.Marshal(address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal address: %w", err)
+	}
+
+	query := `
         UPDATE users
         SET address = $1
         WHERE id = $2
         RETURNING id, name, email, phone, address, updated_at
     `
-    
-    var user model.User
-    err = r.DB.QueryRow(query, addressJSON, userID).Scan(
-        &user.ID, &user.Name, &user.Email, &user.Phone, &addressJSON, &user.UpdatedAt,
-    )
-    if err != nil {
-        return nil, fmt.Errorf("failed to update user address: %w", err)
-    }
+
+	var user model.User
+	err = r.DB.QueryRow(query, addressJSON, userID).Scan(
+		&user.ID, &user.Name, &user.Email, &user.Phone, &addressJSON, &user.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update user address: %w", err)
+	}
 	if err := json.Unmarshal(addressJSON, &user.Address); err != nil {
-        r.Log.Error("Repository: Failed to unmarshal address JSON", zap.Error(err))
-        return nil, fmt.Errorf("failed to deserialize address: %w", err)
-    }
+		r.Log.Error("Repository: Failed to unmarshal address JSON", zap.Error(err))
+		return nil, fmt.Errorf("failed to deserialize address: %w", err)
+	}
 
-    return &user, nil
+	return &user, nil
 }
-
-
-
-
-
-
-
