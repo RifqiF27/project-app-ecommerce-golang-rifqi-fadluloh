@@ -6,7 +6,9 @@ import (
 	"ecommerce/model"
 	"errors"
 	"fmt"
+	"strconv"
 
+	"github.com/lib/pq"
 	"go.uber.org/zap"
 )
 
@@ -16,7 +18,7 @@ type CheckoutRepository interface {
 	AddCart(cart model.Checkout) error
 	DeleteCart(id, userID int) error
 	UpdateCart(userID, productID, quantity int) (*model.Checkout, error)
-	CreateOrder(userID int, productID []int) (*model.OrderResponse, error)
+	CreateOrder(userID int, productID []int, addressIndex int) (*model.OrderResponse, error)
 }
 
 type checkoutRepository struct {
@@ -96,26 +98,26 @@ func (r *checkoutRepository) AddCart(cart model.Checkout) error {
 }
 
 func (r *checkoutRepository) DeleteCart(id, userID int) error {
-    query := `DELETE FROM order_items WHERE id = $1 AND user_id = $2 AND order_id IS NULL`
-    res, err := r.db.Exec(query, id, userID)
-    if err != nil {
-        r.log.Error("Repository: Error executing query", zap.Error(err))
-        return err
-    }
+	query := `DELETE FROM order_items WHERE id = $1 AND user_id = $2 AND order_id IS NULL`
+	res, err := r.db.Exec(query, id, userID)
+	if err != nil {
+		r.log.Error("Repository: Error executing query", zap.Error(err))
+		return err
+	}
 
-    rowsAffected, _ := res.RowsAffected()
-    if rowsAffected == 0 {
-        r.log.Warn("Repository: No cart found for the given userID and id")
-        return fmt.Errorf("no cart found")
-    }
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		r.log.Warn("Repository: No cart found for the given userID and id")
+		return fmt.Errorf("no cart found")
+	}
 
-    r.log.Info("Repository: Cart deleted successfully", zap.Int("id", id), zap.Int("userID", userID))
-    return nil
+	r.log.Info("Repository: Cart deleted successfully", zap.Int("id", id), zap.Int("userID", userID))
+	return nil
 }
 
 func (r *checkoutRepository) UpdateCart(userID, productID, quantity int) (*model.Checkout, error) {
 	if quantity == 0 {
-		// Delete the cart item
+
 		query := `
 			DELETE FROM order_items
 			WHERE user_id = $1 AND product_id = $2 AND order_id IS NULL
@@ -134,10 +136,9 @@ func (r *checkoutRepository) UpdateCart(userID, productID, quantity int) (*model
 		}
 
 		r.log.Info("Repository: cart item deleted successfully", zap.Int("id", deletedID))
-		return nil, nil 
+		return nil, nil
 	}
 
-	// Update the cart item
 	query := `
 		UPDATE order_items
 		SET 
@@ -162,17 +163,29 @@ func (r *checkoutRepository) UpdateCart(userID, productID, quantity int) (*model
 	return &result, nil
 }
 
-func (r *checkoutRepository) CreateOrder(userID int, productID []int) (*model.OrderResponse, error) {
-    ctx := context.Background()
-    tx, err := r.db.BeginTx(ctx, nil)
-    if err != nil {
-        return nil, fmt.Errorf("failed to start transaction: %w", err)
-    }
+func (r *checkoutRepository) CreateOrder(userID int, productID []int, addressIndex int) (*model.OrderResponse, error) {
+	ctx := context.Background()
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %w", err)
+	}
 
-    // Step 1: Insert into `orders` table and get new order ID
-    var orderID int
-    var shippingAddress string
-    insertOrderQuery := `
+	var shippingAddress *string
+	indexStr := strconv.Itoa(addressIndex)
+
+	addressQuery := `SELECT COALESCE(address->>$2, address->>0) FROM users WHERE id = $1`
+	err = tx.QueryRowContext(ctx, addressQuery, userID, indexStr).Scan(&shippingAddress)
+	if err != nil {
+		tx.Rollback()
+        r.log.Error("Repository: failed to fetch address", zap.Error(err))
+		return nil, fmt.Errorf("failed to fetch address at index %d: %w", addressIndex, err)
+
+	}
+
+	r.log.Info("Repository: Fetching shipping address", zap.Int("user_id", userID), zap.Int("address_index", addressIndex), zap.String("address shipping", *shippingAddress))
+
+	var orderID int
+	insertOrderQuery := `
         WITH selected_items AS (
             SELECT 
                 oi.user_id,
@@ -186,33 +199,36 @@ func (r *checkoutRepository) CreateOrder(userID int, productID []int) (*model.Or
             GROUP BY oi.user_id
         )
         INSERT INTO orders (user_id, total_amount, shipping_address)
-        SELECT si.user_id, si.total_price, u.address->>0 AS shipping_address
+        SELECT si.user_id, si.total_price, COALESCE(address->>$3, address->>0) AS shipping_address
         FROM selected_items si
         JOIN users u ON si.user_id = u.id
         RETURNING id, shipping_address;
     `
-    err = tx.QueryRowContext(ctx, insertOrderQuery, userID, productID).Scan(&orderID, &shippingAddress)
-    if err != nil {
-        tx.Rollback()
-        return nil, fmt.Errorf("failed to create order: %w", err)
-    }
 
-    // Step 2: Update `order_items` to link the new order_id
-    updateOrderItemsQuery := `
+	err = tx.QueryRowContext(ctx, insertOrderQuery, userID, pq.Array(productID), indexStr).Scan(&orderID, &shippingAddress)
+	r.log.Info("Repository: Executing query insert order", zap.Int("user_id", userID), zap.Int("address_index", addressIndex), zap.String("address shipping", *shippingAddress))
+
+	if err != nil {
+		tx.Rollback()
+		r.log.Error("Repository: failed to create order", zap.Error(err))
+		return nil, fmt.Errorf("failed to create order: %w", err)
+	}
+
+	updateOrderItemsQuery := `
         UPDATE order_items
         SET order_id = $1
         WHERE user_id = $2 
           AND product_id = ANY($3) 
           AND order_id IS NULL;
     `
-    _, err = tx.ExecContext(ctx, updateOrderItemsQuery, orderID, userID, productID)
-    if err != nil {
-        tx.Rollback()
-        return nil, fmt.Errorf("failed to update order items: %w", err)
-    }
+	_, err = tx.ExecContext(ctx, updateOrderItemsQuery, orderID, userID, pq.Array(productID))
+	if err != nil {
+		tx.Rollback()
+		r.log.Error("Repository: failed to update order items", zap.Error(err))
+		return nil, fmt.Errorf("failed to update order items: %w", err)
+	}
 
-    // Step 3: Retrieve order details
-    selectOrderDetailsQuery := `
+	selectOrderDetailsQuery := `
         WITH selected_items AS (
             SELECT 
                 p.name AS product_name,
@@ -238,39 +254,43 @@ func (r *checkoutRepository) CreateOrder(userID int, productID []int) (*model.Or
         JOIN 
             orders o ON o.id = $3;
     `
-    rows, err := tx.QueryContext(ctx, selectOrderDetailsQuery, userID, productID, orderID)
-    if err != nil {
-        tx.Rollback()
-        return nil, fmt.Errorf("failed to retrieve order details: %w", err)
-    }
-    defer rows.Close()
+	rows, err := tx.QueryContext(ctx, selectOrderDetailsQuery, userID, pq.Array(productID), orderID)
+	r.log.Info("Repository: Executing query details", zap.Int("user_id", userID), zap.Int("address_index", addressIndex), zap.String("address shipping", *shippingAddress))
+	r.log.Error("Repository: Executing query details", zap.Error(err))
 
-    var items []model.OrderItem
-    var shipping string
-    var totalAmount float64
+	if err != nil {
+		tx.Rollback()
+		r.log.Error("Repository: failed to retrieve order details", zap.Error(err))
+		return nil, fmt.Errorf("failed to retrieve order details: %w", err)
+	}
+	defer rows.Close()
 
-    for rows.Next() {
-        var item model.OrderItem
-        if err := rows.Scan(&item.ProductName, &item.Image, &item.SubtotalPrice, &shipping); err != nil {
-            tx.Rollback()
-            return nil, fmt.Errorf("failed to scan order item: %w", err)
-        }
-        totalAmount += item.SubtotalPrice
-        items = append(items, item)
-    }
+	var items []model.OrderItem
+	var shipping string
+	var totalAmount float64
 
-    // Commit transaction
-    if err := tx.Commit(); err != nil {
-        return nil, fmt.Errorf("failed to commit transaction: %w", err)
-    }
+	for rows.Next() {
+		var item model.OrderItem
+		if err := rows.Scan(&item.ProductName, &item.Image, &item.SubtotalPrice, &shipping); err != nil {
+			tx.Rollback()
+			r.log.Error("Repository: failed to scan order item", zap.Error(err))
+			return nil, fmt.Errorf("failed to scan order item: %w", err)
+		}
+		totalAmount += item.SubtotalPrice
+		items = append(items, item)
+	}
 
-    // Build response
-    response := &model.OrderResponse{
-        OrderID:        orderID,
-        Items:          items,
-        Shipping:       shipping,
-        TotalAmount:    totalAmount,
-        ShippingAddress: shippingAddress, // Tambahkan alamat ke response
-    }
-    return response, nil
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	response := &model.OrderResponse{
+		OrderID:         orderID,
+		Items:           items,
+		Shipping:        shipping,
+		TotalAmount:     totalAmount,
+		ShippingAddress: shippingAddress,
+	}
+
+	return response, nil
 }

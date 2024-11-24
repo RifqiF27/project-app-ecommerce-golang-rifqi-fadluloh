@@ -28,6 +28,6 @@ func (s *CheckoutService)  DeleteCartService(id, userID int) error {
 func (s *CheckoutService) UpdateCartService(userID, productID, quantity int) (*model.Checkout, error) {
 	return s.Repo.UpdateCart(userID, productID, quantity)
 }
-func (s *CheckoutService) CreateOrderService(userID int, productID []int) (*model.OrderResponse, error) {
-	return s.Repo.CreateOrder(userID, productID)
+func (s *CheckoutService) CreateOrderService(userID int, productID []int, addressIndex int) (*model.OrderResponse, error) {
+	return s.Repo.CreateOrder(userID, productID, addressIndex)
 }

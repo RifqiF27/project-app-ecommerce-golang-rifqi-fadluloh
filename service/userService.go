@@ -26,12 +26,20 @@ func (s *AuthService) CreateSessionService(user model.Session) error {
 	return s.RepoUser.CreateSession(&user)
 }
 
-
 func (s *AuthService) Logout(token string) error {
 	return s.RepoUser.DeleteSession(token)
 }
 func (s *AuthService) GetAllAddressService(id int) ([]*model.User, error) {
 	return s.RepoUser.GetAllAddress(id)
+}
+func (s *AuthService) GetDetailUserService(id int) (*model.User, error) {
+	return s.RepoUser.GetDetailUser(id)
+}
+func (s *AuthService) UpdateUserService(userID int, name, email, phone, password string, address []string) (*model.User, error) {
+	return s.RepoUser.UpdateUser(userID, name, email, phone, password, address)
+}
+func (s *AuthService) CreateAddressService(userID int, newAddress string) (*model.User, error) {
+	return s.RepoUser.CreateAddress(userID, newAddress)
 }
 
 func (s *AuthService) VerifyToken(token string) (int, error) {
@@ -41,4 +49,3 @@ func (s *AuthService) VerifyToken(token string) (int, error) {
 	}
 	return session.UserID, nil
 }
-

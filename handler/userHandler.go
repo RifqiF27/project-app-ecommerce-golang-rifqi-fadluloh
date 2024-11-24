@@ -106,7 +106,7 @@ func (h *AuthHandler) GetAllAddressHandler(w http.ResponseWriter, r *http.Reques
 		helper.SendJSONResponse(w, http.StatusUnauthorized, "User ID not found", nil)
 		return
 	}
-	
+
 	address, err := h.authService.GetAllAddressService(userID)
 	if err != nil {
 		h.Log.Error("Handler: Error getting address", zap.Error(err))
@@ -116,6 +116,27 @@ func (h *AuthHandler) GetAllAddressHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	helper.SendJSONResponse(w, http.StatusOK, "", address)
+}
+func (h *AuthHandler) GetDetailUserHandler(w http.ResponseWriter, r *http.Request) {
+	h.Log.Info("Handler: Received request", zap.String("method", r.Method), zap.String("path", r.URL.Path))
+
+	userID, ok := r.Context().Value("userID").(int)
+	if !ok {
+		h.Log.Error("Handler: userID not found in context")
+		h.Log.Debug("Handler: userID not found in context", zap.Int("userID", userID))
+		helper.SendJSONResponse(w, http.StatusUnauthorized, "User ID not found", nil)
+		return
+	}
+
+	users, err := h.authService.GetDetailUserService(userID)
+	if err != nil {
+		h.Log.Error("Handler: Error getting users", zap.Error(err))
+		h.Log.Debug("Handler: Error getting users", zap.Error(err))
+		helper.SendJSONResponse(w, http.StatusInternalServerError, err.Error(), nil)
+		return
+	}
+
+	helper.SendJSONResponse(w, http.StatusOK, "", users)
 }
 
 func (h *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -147,4 +168,85 @@ func (h *AuthHandler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helper.SendJSONResponse(w, http.StatusOK, "Logout success", nil)
+}
+
+func (h *AuthHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+	h.Log.Info("Handler: Received request to update user", zap.String("method", r.Method), zap.String("path", r.URL.Path))
+
+	userID, ok := r.Context().Value("userID").(int)
+	if !ok {
+		h.Log.Error("Handler: userID not found in context")
+		helper.SendJSONResponse(w, http.StatusUnauthorized, "User ID not found", nil)
+		return
+	}
+
+	var input model.User
+
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		h.Log.Error("Handler: Failed to decode request body", zap.Error(err))
+		helper.SendJSONResponse(w, http.StatusBadRequest, "Invalid request body", nil)
+		return
+	}
+
+	if len(input.Address) == 0 || (len(input.Address) == 1 && input.Address[0] == "") {
+		h.Log.Warn("Handler: Validation failed for address field", zap.Any("address", input.Address))
+		helper.SendJSONResponse(w, http.StatusBadRequest, "Address cannot be empty", nil)
+		return
+	}
+	if err := h.validator.ValidateStruct(input); err != nil {
+		formattedError := helper.FormatValidationError(err)
+		h.Log.Error("Handler: validation failed", zap.String("error", formattedError))
+		h.Log.Debug("Handler: validation failed", zap.String("error", formattedError))
+		helper.SendJSONResponse(w, http.StatusBadRequest, formattedError, nil)
+		return
+	}
+	updatedUser, err := h.authService.UpdateUserService(userID, input.Name, input.Email, input.Phone, input.Password, input.Address)
+	if err != nil {
+		h.Log.Error("Handler: Failed to update user", zap.Error(err))
+		helper.SendJSONResponse(w, http.StatusInternalServerError, "Failed to update user", nil)
+		return
+	}
+
+	h.Log.Info("Handler: User updated successfully", zap.Int("userID", updatedUser.ID))
+	helper.SendJSONResponse(w, http.StatusOK, "User updated successfully", updatedUser)
+}
+
+func (h *AuthHandler) CreateAddressHandler(w http.ResponseWriter, r *http.Request) {
+    h.Log.Info("Handler: Received request to create address", zap.String("method", r.Method), zap.String("path", r.URL.Path))
+
+    // Ambil userID dari context
+    userID, ok := r.Context().Value("userID").(int)
+    if !ok {
+        h.Log.Error("Handler: userID not found in context")
+        helper.SendJSONResponse(w, http.StatusUnauthorized, "User ID not found", nil)
+        return
+    }
+
+    // Parse body JSON
+    var input struct {
+        NewAddress string `json:"new_address"`
+    }
+    if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+        h.Log.Error("Handler: Failed to decode request body", zap.Error(err))
+        helper.SendJSONResponse(w, http.StatusBadRequest, "Invalid request body", nil)
+        return
+    }
+
+    // Validasi input
+    if input.NewAddress == "" {
+        h.Log.Warn("Handler: Address cannot be empty", zap.Any("input", input))
+        helper.SendJSONResponse(w, http.StatusBadRequest, "Address cannot be empty", nil)
+        return
+    }
+
+    // Panggil service untuk menambahkan alamat baru
+    updatedUser, err := h.authService.CreateAddressService(userID, input.NewAddress)
+    if err != nil {
+        h.Log.Error("Handler: Failed to create address", zap.Error(err))
+        helper.SendJSONResponse(w, http.StatusInternalServerError, "Failed to create address", nil)
+        return
+    }
+
+    h.Log.Info("Handler: Address created successfully", zap.Int("userID", updatedUser.ID))
+    helper.SendJSONResponse(w, http.StatusOK, "Address created successfully", updatedUser)
 }

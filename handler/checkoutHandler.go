@@ -24,7 +24,6 @@ func NewCheckoutHandler(service service.CheckoutService, logger *zap.Logger, con
 	return &CheckoutHandler{service: service, Log: logger, validator: helper.NewValidator(), config: config}
 }
 
-
 func (h *CheckoutHandler) GetAllCartHandler(w http.ResponseWriter, r *http.Request) {
 	h.Log.Info("Handler: Received request", zap.String("method", r.Method), zap.String("path", r.URL.Path))
 
@@ -35,7 +34,7 @@ func (h *CheckoutHandler) GetAllCartHandler(w http.ResponseWriter, r *http.Reque
 		helper.SendJSONResponse(w, http.StatusUnauthorized, "User ID not found", nil)
 		return
 	}
-	
+
 	carts, err := h.service.GetAllCartService(userID)
 	if err != nil {
 		h.Log.Error("Handler: Error getting carts", zap.Error(err))
@@ -56,7 +55,7 @@ func (h *CheckoutHandler) GetTotalCartHandler(w http.ResponseWriter, r *http.Req
 		helper.SendJSONResponse(w, http.StatusUnauthorized, "User ID not found", nil)
 		return
 	}
-	
+
 	carts, err := h.service.GetTotalCartService(userID)
 	if err != nil {
 		h.Log.Error("Handler: Error getting total carts", zap.Error(err))
@@ -69,9 +68,9 @@ func (h *CheckoutHandler) GetTotalCartHandler(w http.ResponseWriter, r *http.Req
 }
 func (h *CheckoutHandler) AddCartHandler(w http.ResponseWriter, r *http.Request) {
 	h.Log.Info("Handler: Received request", zap.String("method", r.Method), zap.String("path", r.URL.Path))
-	
+
 	var cart model.Checkout
-	
+
 	if err := json.NewDecoder(r.Body).Decode(&cart); err != nil {
 		h.Log.Error("Handler: invalid request payload", zap.Error(err))
 		h.Log.Debug("Handler: invalid request payload", zap.Error(err))
@@ -88,7 +87,7 @@ func (h *CheckoutHandler) AddCartHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	cart.UserID = userID
-	
+
 	err := h.service.AddCartService(cart)
 	if err != nil {
 		h.Log.Error("Handler: add cart failed", zap.Error(err))
@@ -133,11 +132,11 @@ func (h *CheckoutHandler) UpdateCartHandler(w http.ResponseWriter, r *http.Reque
 		helper.SendJSONResponse(w, http.StatusBadRequest, "Invalid cart ID", nil)
 		return
 	}
-	
+
 	h.Log.Info("Handler: Received request", zap.String("method", r.Method), zap.String("path", r.URL.Path))
-	
+
 	var cart *model.Checkout
-	
+
 	if err := json.NewDecoder(r.Body).Decode(&cart); err != nil {
 		h.Log.Error("Handler: invalid request payload", zap.Error(err))
 		h.Log.Debug("Handler: invalid request payload", zap.Error(err))
@@ -155,13 +154,13 @@ func (h *CheckoutHandler) UpdateCartHandler(w http.ResponseWriter, r *http.Reque
 
 	cart.ID = id
 	cart.UserID = userID
-	
+
 	cart, err = h.service.UpdateCartService(cart.UserID, cart.ProductID, cart.Quantity)
 	if err != nil {
 		if err.Error() == "cart not found" {
-            h.Log.Warn("Handler: No cart found for user", zap.Int("userID", cart.UserID), zap.Int("productID", cart.ProductID))
-            helper.SendJSONResponse(w, http.StatusNotFound, "Cart item not found", nil)
-            return
+			h.Log.Warn("Handler: No cart found for user", zap.Int("userID", cart.UserID), zap.Int("productID", cart.ProductID))
+			helper.SendJSONResponse(w, http.StatusNotFound, "Cart item not found", nil)
+			return
 		}
 		h.Log.Error("Handler: updated cart failed", zap.Error(err))
 		h.Log.Debug("Handler: updated cart failed", zap.Error(err))
@@ -170,7 +169,7 @@ func (h *CheckoutHandler) UpdateCartHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	if cart == nil {
-		// Item was deleted
+
 		helper.SendJSONResponse(w, http.StatusOK, "Cart item deleted", nil)
 		return
 	}
@@ -179,47 +178,41 @@ func (h *CheckoutHandler) UpdateCartHandler(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *CheckoutHandler) CreateOrderHandler(w http.ResponseWriter, r *http.Request) {
-    h.Log.Info("Handler: Received request", zap.String("method", r.Method), zap.String("path", r.URL.Path))
+	h.Log.Info("Handler: Received request", zap.String("method", r.Method), zap.String("path", r.URL.Path))
 
-    // Ambil userID dari context
-    userID, ok := r.Context().Value("userID").(int)
-    if !ok {
-        h.Log.Error("Handler: userID not found in context")
-        helper.SendJSONResponse(w, http.StatusUnauthorized, "User ID not found", nil)
-        return
-    }
+	userID, ok := r.Context().Value("userID").(int)
+	if !ok {
+		h.Log.Error("Handler: userID not found in context")
+		helper.SendJSONResponse(w, http.StatusUnauthorized, "User ID not found", nil)
+		return
+	}
 
-    // Ambil cart items dari body request
-    var cartItems []model.OrderItem
-    err := json.NewDecoder(r.Body).Decode(&cartItems)
-    if err != nil {
-        h.Log.Error("Handler: invalid request payload", zap.Error(err))
-        helper.SendJSONResponse(w, http.StatusBadRequest, "Invalid input", nil)
-        return
-    }
+	var requestData struct {
+		ProductID    []int `json:"product_id"`
+		AddressIndex int   `json:"address_index"`
+	}
 
-    // Pastikan cartItems tidak kosong
-    if len(cartItems) == 0 {
-        h.Log.Warn("Handler: No items in cart")
-        helper.SendJSONResponse(w, http.StatusBadRequest, "Cart is empty", nil)
-        return
-    }
+	err := json.NewDecoder(r.Body).Decode(&requestData)
+	if err != nil {
+		h.Log.Error("Handler: invalid request payload", zap.Error(err))
+		helper.SendJSONResponse(w, http.StatusBadRequest, "Invalid input", nil)
+		return
+	}
+	h.Log.Info("Handler: Decoded request data", zap.Int("address_index", requestData.AddressIndex))
 
-    // Ekstrak productIDs dari cartItems
-    var productIDs []int
-    for _, item := range cartItems {
-        productIDs = append(productIDs, item.ProductID)
-    }
+	if len(requestData.ProductID) == 0 {
+		h.Log.Warn("Handler: No items in cart")
+		helper.SendJSONResponse(w, http.StatusBadRequest, "Cart is empty", nil)
+		return
+	}
 
-    // Gunakan service untuk membuat pesanan
-    orderResponse, err := h.service.CreateOrderService(userID, productIDs)
-    if err != nil {
-        h.Log.Error("Handler: failed to create order", zap.Error(err))
-        helper.SendJSONResponse(w, http.StatusInternalServerError, "Failed to create order", nil)
-        return
-    }
+	orderResponse, err := h.service.CreateOrderService(userID, requestData.ProductID, requestData.AddressIndex)
 
-    // Kirim response dengan detail order yang berhasil dibuat
-    helper.SendJSONResponse(w, http.StatusCreated, "Order successfully created", orderResponse)
+	if err != nil {
+		h.Log.Error("Handler: failed to create order", zap.Error(err))
+		helper.SendJSONResponse(w, http.StatusInternalServerError, "Failed to create order", nil)
+		return
+	}
+
+	helper.SendJSONResponse(w, http.StatusCreated, "Order successfully created", orderResponse)
 }
-

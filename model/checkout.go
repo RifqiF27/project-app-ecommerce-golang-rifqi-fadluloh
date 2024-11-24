@@ -15,14 +15,18 @@ type Checkout struct {
 type OrderResponse struct {
 	OrderID         int         `json:"order_id"`
 	Items           []OrderItem `json:"items"`
-	ShippingAddress string      `json:"shipping_address"`
+	ShippingAddress *string     `json:"shipping_address"`
+	AddressIndex    int         `json:"-"`
 	Shipping        string      `json:"shipping"`
 	TotalAmount     float64     `json:"total_amount"`
 }
 
 type OrderItem struct {
-	ProductID     []int     `json:"product_id"`
+	UserID        int     `json:"user_id,omitempty"`
+	ProductID     []int   `json:"product_id,omitempty"`
+	AddressIndex  int     `json:"address_index,omitempty"`
 	ProductName   string  `json:"product_name"`
 	Image         string  `json:"image"`
+	Quantity   int     `json:"quantity,omitempty"`
 	SubtotalPrice float64 `json:"subtotal_price"`
 }

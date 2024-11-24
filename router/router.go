@@ -50,6 +50,17 @@ func NewRouter(checkoutHandler *handler.CheckoutHandler, homePageHandler *handle
 	authMiddleware := middleware_auth.NewAuthMiddleware(authService, log)
 
 	r.Group(func(r chi.Router) {
+		r.Route("/api/account", func(r chi.Router) {
+			r.With(authMiddleware.Middleware).Get("/address", authHandler.GetAllAddressHandler)
+			r.With(authMiddleware.Middleware).Get("/detail-user", authHandler.GetDetailUserHandler)
+			r.With(authMiddleware.Middleware).Put("/update-user", authHandler.UpdateUserHandler)
+			r.With(authMiddleware.Middleware).Post("/address", authHandler.CreateAddressHandler)
+
+		})
+	})
+
+
+	r.Group(func(r chi.Router) {
 		r.Route("/api/products", func(r chi.Router) {
 			r.Get("/", homePageHandler.GetAllProductsHandler)
 			r.Get("/best-selling", homePageHandler.GetAllBestSellingProductsHandler)
@@ -57,7 +68,6 @@ func NewRouter(checkoutHandler *handler.CheckoutHandler, homePageHandler *handle
 			r.Get("/recomments", homePageHandler.GetAllRecommentsProductsHandler)
 			r.Get("/{id}", homePageHandler.GetByIdProductHandler)
 			
-			r.With(authMiddleware.Middleware).Get("/address", authHandler.GetAllAddressHandler)
 			r.With(authMiddleware.Middleware).Get("/carts", checkoutHandler.GetAllCartHandler)
 			r.With(authMiddleware.Middleware).Post("/carts", checkoutHandler.AddCartHandler)
 			r.With(authMiddleware.Middleware).Post("/orders", checkoutHandler.CreateOrderHandler)
