@@ -27,6 +27,6 @@ type OrderItem struct {
 	AddressIndex  int     `json:"address_index,omitempty"`
 	ProductName   string  `json:"product_name"`
 	Image         string  `json:"image"`
-	Quantity   int     `json:"quantity,omitempty"`
+	Quantity      int     `json:"quantity,omitempty"`
 	SubtotalPrice float64 `json:"subtotal_price"`
 }

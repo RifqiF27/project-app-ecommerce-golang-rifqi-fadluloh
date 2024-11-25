@@ -55,6 +55,7 @@ func NewRouter(checkoutHandler *handler.CheckoutHandler, homePageHandler *handle
 			r.With(authMiddleware.Middleware).Get("/detail-user", authHandler.GetDetailUserHandler)
 			r.With(authMiddleware.Middleware).Put("/update-user", authHandler.UpdateUserHandler)
 			r.With(authMiddleware.Middleware).Put("/address", authHandler.UpdateAddressUserHandler)
+			r.With(authMiddleware.Middleware).Delete("/address", authHandler.DeleteAddressHandler)
 			r.With(authMiddleware.Middleware).Post("/address-default", authHandler.SetDefaultAddressUserHandler)
 			r.With(authMiddleware.Middleware).Post("/address", authHandler.CreateAddressHandler)
 

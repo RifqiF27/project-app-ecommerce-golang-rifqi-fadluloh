@@ -20,6 +20,7 @@ type AuthRepository interface {
 	UpdateUser(userID int, name, email, oldPassword, newPassword string) (*model.User, error)
 	UpdateAddressUser(userID int, address []string) (*model.User, error)
 	SetDefaultAddress(userID int, addressIndex int) (*model.User, error)
+	DeleteAddress(userID int, addressIndex int) (*model.User, error)
 	CreateAddress(userID int, newAddress string) (*model.User, error)
 }
 
@@ -171,12 +172,12 @@ func (r *authRepository) GetDetailUser(id int) (*model.User, error) {
 		}
 	}
 
-	r.Log.Debug("Repository: Retrieved user details", zap.Any("user", user))
+	r.Log.Info("Repository: Retrieved user details", zap.Any("user", user))
 	return &user, nil
 }
 
 func (r *authRepository) UpdateUser(userID int, name, email, oldPassword, newPassword string) (*model.User, error) {
-	r.Log.Debug("Repository: Updating user details", zap.Int("userID", userID), zap.String("name", name), zap.String("email", email))
+	r.Log.Info("Repository: Updating user details", zap.Int("userID", userID), zap.String("name", name), zap.String("email", email))
 
 	var storedPassword string
 	err := r.DB.QueryRow(`SELECT password FROM users WHERE id = $1`, userID).Scan(&storedPassword)
@@ -213,12 +214,12 @@ func (r *authRepository) UpdateUser(userID int, name, email, oldPassword, newPas
 		return nil, fmt.Errorf("failed to update user: %w", err)
 	}
 
-	r.Log.Debug("Repository: User details updated successfully", zap.Int("userID", updatedUser.ID))
+	r.Log.Info("Repository: User details updated successfully", zap.Int("userID", updatedUser.ID))
 	return &updatedUser, nil
 }
 
 func (r *authRepository) UpdateAddressUser(userID int, address []string) (*model.User, error) {
-	r.Log.Debug("Repository: Updating user details", zap.Int("userID", userID), zap.Any("address", address))
+	r.Log.Info("Repository: Updating user details", zap.Int("userID", userID), zap.Any("address", address))
 
 	addressJSON, err := json.Marshal(address)
 	if err != nil {
@@ -248,7 +249,7 @@ func (r *authRepository) UpdateAddressUser(userID int, address []string) (*model
 		return nil, fmt.Errorf("failed to deserialize address: %w", err)
 	}
 
-	r.Log.Debug("Repository: User details updated successfully", zap.Int("userID", updatedUser.ID))
+	r.Log.Info("Repository: User details updated successfully", zap.Int("userID", updatedUser.ID))
 	return &updatedUser, nil
 }
 
@@ -272,6 +273,35 @@ func (r *authRepository) SetDefaultAddress(userID int, addressIndex int) (*model
 	}
 
 	return response, nil
+}
+func (r *authRepository) DeleteAddress(userID int, addressIndex int) (*model.User, error) {
+	var addressJSON []byte
+
+	addressQuery := `
+        UPDATE users 
+        SET address = address - $2 
+        WHERE id = $1 
+        RETURNING id, address;
+    `
+
+	var updatedUser model.User
+
+	err := r.DB.QueryRow(addressQuery, userID, addressIndex).Scan(
+		&updatedUser.ID,
+		&addressJSON,
+	)
+	if err != nil {
+		r.Log.Error("Repository: Failed to delete address", zap.Error(err))
+		return nil, fmt.Errorf("failed to delete address: %w", err)
+	}
+
+	if err := json.Unmarshal(addressJSON, &updatedUser.Address); err != nil {
+		r.Log.Error("Repository: Failed to unmarshal address JSON", zap.Error(err))
+		return nil, fmt.Errorf("failed to deserialize address: %w", err)
+	}
+
+	r.Log.Info("Repository: Deleted address successfully", zap.Int("userID", updatedUser.ID))
+	return &updatedUser, nil
 }
 
 func (r *authRepository) CreateAddress(userID int, newAddress string) (*model.User, error) {

@@ -44,6 +44,9 @@ func (s *AuthService) UpdateAddressUserService(userID int, address []string) (*m
 func (s *AuthService) SetDefaultAddressService(userID int, addressIndex int) (*model.User, error) {
 	return s.RepoUser.SetDefaultAddress(userID, addressIndex)
 }
+func (s *AuthService) DeleteAddressService(userID int, addressIndex int) (*model.User, error) {
+	return s.RepoUser.DeleteAddress(userID, addressIndex)
+}
 func (s *AuthService) CreateAddressService(userID int, newAddress string) (*model.User, error) {
 	return s.RepoUser.CreateAddress(userID, newAddress)
 }

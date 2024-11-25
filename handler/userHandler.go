@@ -203,7 +203,7 @@ func (h *AuthHandler) UpdateUserHandler(w http.ResponseWriter, r *http.Request) 
 	updatedUser, err := h.authService.UpdateUserService(userID, input.Name, input.Email, input.OldPassword, input.NewPassword)
 	if err != nil {
 		h.Log.Error("Handler: Failed to update user", zap.Error(err))
-		helper.SendJSONResponse(w, http.StatusInternalServerError, "Failed to update user", nil)
+		helper.SendJSONResponse(w, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
@@ -279,15 +279,52 @@ func (h *AuthHandler) SetDefaultAddressUserHandler(w http.ResponseWriter, r *htt
 		return
 	}
 
-	updatedUser, err := h.authService.SetDefaultAddressService(userID, input.AddressIndex)
+	address, err := h.authService.SetDefaultAddressService(userID, input.AddressIndex)
 	if err != nil {
-		h.Log.Error("Handler: Failed to update user", zap.Error(err))
-		helper.SendJSONResponse(w, http.StatusInternalServerError, "Failed to update user", nil)
+		h.Log.Error("Handler: Failed to default address", zap.Error(err))
+		helper.SendJSONResponse(w, http.StatusInternalServerError, "Failed to default address", nil)
 		return
 	}
 
-	h.Log.Info("Handler: User updated successfully", zap.Int("userID", updatedUser.ID))
-	helper.SendJSONResponse(w, http.StatusOK, "User updated successfully", updatedUser)
+	h.Log.Info("Handler: default address successfully", zap.Int("userID", address.ID))
+	helper.SendJSONResponse(w, http.StatusOK, "default address successfully", address)
+}
+func (h *AuthHandler) DeleteAddressHandler(w http.ResponseWriter, r *http.Request) {
+	h.Log.Info("Handler: Received request to update user", zap.String("method", r.Method), zap.String("path", r.URL.Path))
+
+	userID, ok := r.Context().Value("userID").(int)
+	if !ok {
+		h.Log.Error("Handler: userID not found in context")
+		helper.SendJSONResponse(w, http.StatusUnauthorized, "User ID not found", nil)
+		return
+	}
+
+	var input struct {
+		AddressIndex int `json:"address_index"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&input)
+	if err != nil {
+		h.Log.Error("Handler: Failed to parse request body", zap.Error(err))
+		helper.SendJSONResponse(w, http.StatusBadRequest, "Invalid input data", nil)
+		return
+	}
+
+	if input.AddressIndex < 0 {
+		h.Log.Warn("Handler: Validation failed for address index", zap.Int("addressIndex", input.AddressIndex))
+		helper.SendJSONResponse(w, http.StatusBadRequest, "Invalid address index", nil)
+		return
+	}
+
+	deleteAddress, err := h.authService.DeleteAddressService(userID, input.AddressIndex)
+	if err != nil {
+		h.Log.Error("Handler: Failed to delete address", zap.Error(err))
+		helper.SendJSONResponse(w, http.StatusInternalServerError, "Failed to delete address", nil)
+		return
+	}
+
+	h.Log.Info("Handler: User deleted successfully", zap.Int("userID", deleteAddress.ID))
+	helper.SendJSONResponse(w, http.StatusOK, "User deleted address successfully", nil)
 }
 
 func (h *AuthHandler) CreateAddressHandler(w http.ResponseWriter, r *http.Request) {

@@ -48,6 +48,9 @@ func (h *CheckoutHandler) GetAllCartHandler(w http.ResponseWriter, r *http.Reque
 func (h *CheckoutHandler) GetTotalCartHandler(w http.ResponseWriter, r *http.Request) {
 	h.Log.Info("Handler: Received request", zap.String("method", r.Method), zap.String("path", r.URL.Path))
 
+	var cart struct {
+		Total_carts int `json:"total_carts"`
+	}
 	userID, ok := r.Context().Value("userID").(int)
 	if !ok {
 		h.Log.Error("Handler: userID not found in context")
@@ -63,8 +66,10 @@ func (h *CheckoutHandler) GetTotalCartHandler(w http.ResponseWriter, r *http.Req
 		helper.SendJSONResponse(w, http.StatusInternalServerError, err.Error(), nil)
 		return
 	}
+	
+	cart.Total_carts = carts.TotalCarts
 
-	helper.SendJSONResponse(w, http.StatusOK, "", carts)
+	helper.SendJSONResponse(w, http.StatusOK, "", cart)
 }
 func (h *CheckoutHandler) AddCartHandler(w http.ResponseWriter, r *http.Request) {
 	h.Log.Info("Handler: Received request", zap.String("method", r.Method), zap.String("path", r.URL.Path))
