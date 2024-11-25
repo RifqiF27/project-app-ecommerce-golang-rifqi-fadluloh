@@ -1,0 +1,282 @@
+{"L":"INFO","T":"2024-11-25T12:37:35.471+0700","M":"Logger initialized successfully"}
+{"L":"INFO","T":"2024-11-25T12:37:35.473+0700","M":"Logger initialized successfully"}
+{"L":"PANIC","T":"2024-11-25T12:37:35.486+0700","M":"Failed to ping database","error":"dial tcp [::1]:5432: connectex: No connection could be made because the target machine actively refused it."}
+{"L":"INFO","T":"2024-11-25T15:11:27.094+0700","M":"Logger initialized successfully"}
+{"L":"INFO","T":"2024-11-25T15:11:27.096+0700","M":"Logger initialized successfully"}
+{"L":"INFO","T":"2024-11-25T15:11:27.161+0700","M":"Database connection initialized successfully"}
+{"L":"INFO","T":"2024-11-25T15:11:27.162+0700","M":"Loaded configuration","AppName":"E-commerce","Port":"8080"}
+{"L":"DEBUG","T":"2024-11-25T15:11:27.162+0700","M":"Loaded configuration","AppName":"E-commerce","Port":"8080"}
+{"L":"INFO","T":"2024-11-25T16:16:00.155+0700","M":"Logger initialized successfully"}
+{"L":"INFO","T":"2024-11-25T16:16:00.156+0700","M":"Logger initialized successfully"}
+{"L":"INFO","T":"2024-11-25T16:16:00.201+0700","M":"Database connection initialized successfully"}
+{"L":"INFO","T":"2024-11-25T16:16:00.202+0700","M":"Loaded configuration","AppName":"E-commerce","Port":"8080"}
+{"L":"DEBUG","T":"2024-11-25T16:16:00.202+0700","M":"Loaded configuration","AppName":"E-commerce","Port":"8080"}
+{"L":"INFO","T":"2024-11-25T16:19:49.521+0700","M":"Request received","method":"POST","url":"/login"}
+{"L":"INFO","T":"2024-11-25T16:19:49.521+0700","M":"Repository: Executing query","query":"SELECT id, name, email, phone, password FROM users WHERE (email = $1 OR phone = $2) AND password = $3","params":["bob.brown@example.com","","password101"]}
+{"L":"ERROR","T":"2024-11-25T16:19:49.533+0700","M":"Repository: Error executing query","error":"pq: relation \"users\" does not exist"}
+{"L":"ERROR","T":"2024-11-25T16:19:49.533+0700","M":"Handler: login failed","error":"pq: relation \"users\" does not exist"}
+{"L":"DEBUG","T":"2024-11-25T16:19:49.534+0700","M":"Handler: login failed","error":"pq: relation \"users\" does not exist"}
+{"L":"INFO","T":"2024-11-25T16:19:49.534+0700","M":"Request processed","method":"POST","url":"/login","duration":"13.0275ms"}
+{"L":"INFO","T":"2024-11-25T17:18:45.449+0700","M":"Logger initialized successfully"}
+{"L":"INFO","T":"2024-11-25T17:18:45.450+0700","M":"Logger initialized successfully"}
+{"L":"INFO","T":"2024-11-25T17:18:45.608+0700","M":"Database connection initialized successfully"}
+{"L":"INFO","T":"2024-11-25T17:18:45.608+0700","M":"Loaded configuration","AppName":"E-commerce","Port":"8080"}
+{"L":"DEBUG","T":"2024-11-25T17:18:45.609+0700","M":"Loaded configuration","AppName":"E-commerce","Port":"8080"}
+{"L":"INFO","T":"2024-11-25T17:18:51.612+0700","M":"Request received","method":"POST","url":"/login"}
+{"L":"INFO","T":"2024-11-25T17:18:51.612+0700","M":"Repository: Executing query","query":"SELECT id, name, email, phone, password FROM users WHERE (email = $1 OR phone = $2) AND password = $3","params":["bob.brown@example.com","","password101"]}
+{"L":"INFO","T":"2024-11-25T17:18:51.616+0700","M":"Repository: User login successful","userID":4}
+{"L":"INFO","T":"2024-11-25T17:18:51.624+0700","M":"Request processed","method":"POST","url":"/login","duration":"11.6871ms"}
+{"L":"INFO","T":"2024-11-25T17:19:11.862+0700","M":"Request received","method":"GET","url":"/api/products"}
+{"L":"INFO","T":"2024-11-25T17:19:11.862+0700","M":"Handler: Received request","method":"GET","path":"/api/products"}
+{"L":"INFO","T":"2024-11-25T17:19:11.878+0700","M":"Repository: executed query","query":"\n\tSELECT p.id, p.name, p.images->>0 AS thumbnail_image, p.price, \n\tCOALESCE(CASE WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n\tELSE 0 \n\tEND, 0) AS discount_percentage,\n \t\tCASE \n    WHEN COALESCE(\n    CASE \n        WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n        ELSE 0\n    END, 0) = 0 THEN 0\n    ELSE CAST(p.price AS FLOAT) * (1 - CAST(COALESCE(\n    CASE \n        WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n        ELSE 0\n    END, 0) AS FLOAT) / 100.0) END AS discount_price,  \n\tCOALESCE(AVG(r.rating), 0) as average_rating,\n\tCOUNT(DISTINCT oi.order_id) AS sold,\n\tCASE WHEN CURRENT_DATE - p.created_at <= INTERVAL '30 days' THEN TRUE ELSE FALSE\n    END AS is_new\n\tFROM products p\n\tJOIN categories c ON p.category_id = c.id\n\tLEFT JOIN ratings r ON p.id = r.product_id\n\tLEFT JOIN order_items oi ON p.id = oi.product_id\n\tLEFT JOIN weekly_promotions wp ON p.id = wp.product_id\n\tWHERE 1=1\n\t GROUP BY p.id, p.name, p.images, p.price, wp.discount_percentage, p.created_at ORDER BY p.id ASC LIMIT $1 OFFSET $2","params":[5,0]}
+{"L":"INFO","T":"2024-11-25T17:19:11.880+0700","M":"Request processed","method":"GET","url":"/api/products","duration":"18.0198ms"}
+{"L":"INFO","T":"2024-11-25T17:19:32.821+0700","M":"Request received","method":"GET","url":"/api/products?page=2"}
+{"L":"INFO","T":"2024-11-25T17:19:32.822+0700","M":"Handler: Received request","method":"GET","path":"/api/products"}
+{"L":"INFO","T":"2024-11-25T17:19:32.829+0700","M":"Repository: executed query","query":"\n\tSELECT p.id, p.name, p.images->>0 AS thumbnail_image, p.price, \n\tCOALESCE(CASE WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n\tELSE 0 \n\tEND, 0) AS discount_percentage,\n \t\tCASE \n    WHEN COALESCE(\n    CASE \n        WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n        ELSE 0\n    END, 0) = 0 THEN 0\n    ELSE CAST(p.price AS FLOAT) * (1 - CAST(COALESCE(\n    CASE \n        WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n        ELSE 0\n    END, 0) AS FLOAT) / 100.0) END AS discount_price,  \n\tCOALESCE(AVG(r.rating), 0) as average_rating,\n\tCOUNT(DISTINCT oi.order_id) AS sold,\n\tCASE WHEN CURRENT_DATE - p.created_at <= INTERVAL '30 days' THEN TRUE ELSE FALSE\n    END AS is_new\n\tFROM products p\n\tJOIN categories c ON p.category_id = c.id\n\tLEFT JOIN ratings r ON p.id = r.product_id\n\tLEFT JOIN order_items oi ON p.id = oi.product_id\n\tLEFT JOIN weekly_promotions wp ON p.id = wp.product_id\n\tWHERE 1=1\n\t GROUP BY p.id, p.name, p.images, p.price, wp.discount_percentage, p.created_at ORDER BY p.id ASC LIMIT $1 OFFSET $2","params":[5,5]}
+{"L":"INFO","T":"2024-11-25T17:19:32.832+0700","M":"Request processed","method":"GET","url":"/api/products?page=2","duration":"10.531ms"}
+{"L":"INFO","T":"2024-11-25T17:19:50.685+0700","M":"Request received","method":"GET","url":"/api/products?category_id=1"}
+{"L":"INFO","T":"2024-11-25T17:19:50.686+0700","M":"Handler: Received request","method":"GET","path":"/api/products"}
+{"L":"INFO","T":"2024-11-25T17:19:50.693+0700","M":"Repository: executed query","query":"\n\tSELECT p.id, p.name, p.images->>0 AS thumbnail_image, p.price, \n\tCOALESCE(CASE WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n\tELSE 0 \n\tEND, 0) AS discount_percentage,\n \t\tCASE \n    WHEN COALESCE(\n    CASE \n        WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n        ELSE 0\n    END, 0) = 0 THEN 0\n    ELSE CAST(p.price AS FLOAT) * (1 - CAST(COALESCE(\n    CASE \n        WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n        ELSE 0\n    END, 0) AS FLOAT) / 100.0) END AS discount_price,  \n\tCOALESCE(AVG(r.rating), 0) as average_rating,\n\tCOUNT(DISTINCT oi.order_id) AS sold,\n\tCASE WHEN CURRENT_DATE - p.created_at <= INTERVAL '30 days' THEN TRUE ELSE FALSE\n    END AS is_new\n\tFROM products p\n\tJOIN categories c ON p.category_id = c.id\n\tLEFT JOIN ratings r ON p.id = r.product_id\n\tLEFT JOIN order_items oi ON p.id = oi.product_id\n\tLEFT JOIN weekly_promotions wp ON p.id = wp.product_id\n\tWHERE 1=1\n\t AND p.category_id = $1 GROUP BY p.id, p.name, p.images, p.price, wp.discount_percentage, p.created_at ORDER BY p.id ASC LIMIT $2 OFFSET $3","params":[1,5,0]}
+{"L":"INFO","T":"2024-11-25T17:19:50.696+0700","M":"Request processed","method":"GET","url":"/api/products?category_id=1","duration":"10.7897ms"}
+{"L":"INFO","T":"2024-11-25T17:20:00.597+0700","M":"Request received","method":"GET","url":"/api/products?name=gam"}
+{"L":"INFO","T":"2024-11-25T17:20:00.597+0700","M":"Handler: Received request","method":"GET","path":"/api/products"}
+{"L":"INFO","T":"2024-11-25T17:20:00.604+0700","M":"Repository: executed query","query":"\n\tSELECT p.id, p.name, p.images->>0 AS thumbnail_image, p.price, \n\tCOALESCE(CASE WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n\tELSE 0 \n\tEND, 0) AS discount_percentage,\n \t\tCASE \n    WHEN COALESCE(\n    CASE \n        WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n        ELSE 0\n    END, 0) = 0 THEN 0\n    ELSE CAST(p.price AS FLOAT) * (1 - CAST(COALESCE(\n    CASE \n        WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n        ELSE 0\n    END, 0) AS FLOAT) / 100.0) END AS discount_price,  \n\tCOALESCE(AVG(r.rating), 0) as average_rating,\n\tCOUNT(DISTINCT oi.order_id) AS sold,\n\tCASE WHEN CURRENT_DATE - p.created_at <= INTERVAL '30 days' THEN TRUE ELSE FALSE\n    END AS is_new\n\tFROM products p\n\tJOIN categories c ON p.category_id = c.id\n\tLEFT JOIN ratings r ON p.id = r.product_id\n\tLEFT JOIN order_items oi ON p.id = oi.product_id\n\tLEFT JOIN weekly_promotions wp ON p.id = wp.product_id\n\tWHERE 1=1\n\t AND p.name ILIKE $1 GROUP BY p.id, p.name, p.images, p.price, wp.discount_percentage, p.created_at ORDER BY p.id ASC LIMIT $2 OFFSET $3","params":["%gam%",5,0]}
+{"L":"INFO","T":"2024-11-25T17:20:00.606+0700","M":"Request processed","method":"GET","url":"/api/products?name=gam","duration":"9.6355ms"}
+{"L":"INFO","T":"2024-11-25T17:20:12.811+0700","M":"Request received","method":"GET","url":"/api/products/best-selling"}
+{"L":"INFO","T":"2024-11-25T17:20:12.811+0700","M":"Handler: Received request","method":"GET","path":"/api/products/best-selling"}
+{"L":"INFO","T":"2024-11-25T17:20:12.816+0700","M":"Repository: executed query","query":"\n\tSELECT p.id, p.name, p.images->>0 AS thumbnail_image, p.price, \n    COALESCE(CASE WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n\tELSE 0 \n\tEND, 0) AS discount_percentage,\n \t\tCASE \n    WHEN COALESCE(\n    CASE \n        WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n        ELSE 0\n    END, 0) = 0 THEN 0\n    ELSE CAST(p.price AS FLOAT) * (1 - CAST(COALESCE(\n    CASE \n        WHEN MAX(wp.start_date) <= CURRENT_DATE AND MAX(wp.end_date) >= CURRENT_DATE THEN wp.discount_percentage\n        ELSE 0\n    END, 0) AS FLOAT) / 100.0) END AS discount_price,\n    COALESCE(AVG(r.rating), 0) AS average_rating,\n    COUNT(DISTINCT oi.order_id) AS sold,\n\tCASE WHEN CURRENT_DATE - p.created_at <= INTERVAL '30 days' THEN TRUE ELSE FALSE\n    END AS is_new \n\tFROM products p\n\tJOIN categories c ON p.category_id = c.id\n\tLEFT JOIN ratings r ON p.id = r.product_id\n\tLEFT JOIN order_items oi ON p.id = oi.product_id\n\tLEFT JOIN orders o ON oi.order_id = o.id\n\tLEFT JOIN weekly_promotions wp ON p.id = wp.product_id\n\tWHERE DATE_TRUNC('month', o.created_at) = DATE_TRUNC('month', CURRENT_DATE)\n\t GROUP BY p.id, p.name, p.images, p.price, wp.discount_percentage, p.created_at ORDER BY sold DESC, p.id ASC LIMIT $1 OFFSET $2","params":[5,0]}
+{"L":"INFO","T":"2024-11-25T17:20:12.818+0700","M":"Request processed","method":"GET","url":"/api/products/best-selling","duration":"6.762ms"}
+{"L":"INFO","T":"2024-11-25T17:20:27.502+0700","M":"Request received","method":"GET","url":"/api/products/weekly-promotion"}
+{"L":"INFO","T":"2024-11-25T17:20:27.502+0700","M":"Handler: Received request","method":"GET","path":"/api/products/weekly-promotion"}
+{"L":"INFO","T":"2024-11-25T17:20:27.503+0700","M":"Request processed","method":"GET","url":"/api/products/weekly-promotion","duration":"1.8412ms"}
+{"L":"INFO","T":"2024-11-25T17:20:36.962+0700","M":"Request received","method":"GET","url":"/api/products/recomments"}
+{"L":"INFO","T":"2024-11-25T17:20:36.962+0700","M":"Handler: Received request","method":"GET","path":"/api/products/recomments"}
+{"L":"INFO","T":"2024-11-25T17:20:36.964+0700","M":"Request processed","method":"GET","url":"/api/products/recomments","duration":"1.8851ms"}
+{"L":"INFO","T":"2024-11-25T17:20:47.795+0700","M":"Request received","method":"POST","url":"/api/products/wishlist"}
+{"L":"DEBUG","T":"2024-11-25T17:20:47.796+0700","M":"Middleware: Processing request","path":"/api/products/wishlist"}
+{"L":"WARN","T":"2024-11-25T17:20:47.797+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:20:47.797+0700","M":"Request processed","method":"POST","url":"/api/products/wishlist","duration":"2.0747ms"}
+{"L":"INFO","T":"2024-11-25T17:20:54.976+0700","M":"Request received","method":"POST","url":"/api/products/wishlist"}
+{"L":"DEBUG","T":"2024-11-25T17:20:54.976+0700","M":"Middleware: Processing request","path":"/api/products/wishlist"}
+{"L":"INFO","T":"2024-11-25T17:20:54.977+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:20:54.982+0700","M":"Repository: Wishlist added successfully","id":6}
+{"L":"INFO","T":"2024-11-25T17:20:54.983+0700","M":"Request processed","method":"POST","url":"/api/products/wishlist","duration":"7.6208ms"}
+{"L":"INFO","T":"2024-11-25T17:21:03.731+0700","M":"Request received","method":"POST","url":"/api/products/wishlist"}
+{"L":"DEBUG","T":"2024-11-25T17:21:03.732+0700","M":"Middleware: Processing request","path":"/api/products/wishlist"}
+{"L":"INFO","T":"2024-11-25T17:21:03.733+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"ERROR","T":"2024-11-25T17:21:03.738+0700","M":"Repository: Error executing query","error":"pq: duplicate key value violates unique constraint \"wishlists_user_id_product_id_key\""}
+{"L":"ERROR","T":"2024-11-25T17:21:03.739+0700","M":"Handler: add wishlist failed","error":"product not found or product already exists in wishlist"}
+{"L":"DEBUG","T":"2024-11-25T17:21:03.740+0700","M":"Handler: add wishlist failed","error":"product not found or product already exists in wishlist"}
+{"L":"INFO","T":"2024-11-25T17:21:03.740+0700","M":"Request processed","method":"POST","url":"/api/products/wishlist","duration":"9.4299ms"}
+{"L":"INFO","T":"2024-11-25T17:21:11.126+0700","M":"Request received","method":"POST","url":"/api/products/wishlist"}
+{"L":"DEBUG","T":"2024-11-25T17:21:11.127+0700","M":"Middleware: Processing request","path":"/api/products/wishlist"}
+{"L":"INFO","T":"2024-11-25T17:21:11.127+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"ERROR","T":"2024-11-25T17:21:11.128+0700","M":"Repository: Error executing query","error":"pq: duplicate key value violates unique constraint \"wishlists_user_id_product_id_key\""}
+{"L":"ERROR","T":"2024-11-25T17:21:11.128+0700","M":"Handler: add wishlist failed","error":"product not found or product already exists in wishlist"}
+{"L":"DEBUG","T":"2024-11-25T17:21:11.128+0700","M":"Handler: add wishlist failed","error":"product not found or product already exists in wishlist"}
+{"L":"INFO","T":"2024-11-25T17:21:11.129+0700","M":"Request processed","method":"POST","url":"/api/products/wishlist","duration":"2.4009ms"}
+{"L":"INFO","T":"2024-11-25T17:21:28.476+0700","M":"Request received","method":"GET","url":"/api/categories"}
+{"L":"INFO","T":"2024-11-25T17:21:28.477+0700","M":"Handler: Received request","method":"GET","path":"/api/categories"}
+{"L":"INFO","T":"2024-11-25T17:21:28.479+0700","M":"Request processed","method":"GET","url":"/api/categories","duration":"3.3338ms"}
+{"L":"INFO","T":"2024-11-25T17:21:36.002+0700","M":"Request received","method":"GET","url":"/api/banners"}
+{"L":"INFO","T":"2024-11-25T17:21:36.002+0700","M":"Handler: Received request","method":"GET","path":"/api/banners"}
+{"L":"INFO","T":"2024-11-25T17:21:36.004+0700","M":"Request processed","method":"GET","url":"/api/banners","duration":"1.9657ms"}
+{"L":"INFO","T":"2024-11-25T17:21:52.909+0700","M":"Request received","method":"GET","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:21:52.909+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"WARN","T":"2024-11-25T17:21:52.910+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:21:52.910+0700","M":"Request processed","method":"GET","url":"/api/products/carts","duration":"851.7µs"}
+{"L":"INFO","T":"2024-11-25T17:21:57.002+0700","M":"Request received","method":"GET","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:21:57.002+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:21:57.003+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:21:57.003+0700","M":"Handler: Received request","method":"GET","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:21:57.004+0700","M":"Request processed","method":"GET","url":"/api/products/carts","duration":"2.1709ms"}
+{"L":"INFO","T":"2024-11-25T17:23:36.298+0700","M":"Request received","method":"DELETE","url":"/api/products/wishlist/1"}
+{"L":"DEBUG","T":"2024-11-25T17:23:36.298+0700","M":"Middleware: Processing request","path":"/api/products/wishlist/1"}
+{"L":"WARN","T":"2024-11-25T17:23:36.299+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:23:36.299+0700","M":"Request processed","method":"DELETE","url":"/api/products/wishlist/1","duration":"1.2459ms"}
+{"L":"INFO","T":"2024-11-25T17:24:01.467+0700","M":"Request received","method":"DELETE","url":"/api/products/wishlist/1"}
+{"L":"DEBUG","T":"2024-11-25T17:24:01.467+0700","M":"Middleware: Processing request","path":"/api/products/wishlist/1"}
+{"L":"INFO","T":"2024-11-25T17:24:01.467+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"WARN","T":"2024-11-25T17:24:01.469+0700","M":"Repository: No wishlist found for the given userID and id"}
+{"L":"ERROR","T":"2024-11-25T17:24:01.469+0700","M":"Handler: delete wishlist failed","error":"no wishlist found"}
+{"L":"INFO","T":"2024-11-25T17:24:01.469+0700","M":"Request processed","method":"DELETE","url":"/api/products/wishlist/1","duration":"2.2257ms"}
+{"L":"INFO","T":"2024-11-25T17:24:09.085+0700","M":"Request received","method":"DELETE","url":"/api/products/wishlist/6"}
+{"L":"DEBUG","T":"2024-11-25T17:24:09.085+0700","M":"Middleware: Processing request","path":"/api/products/wishlist/6"}
+{"L":"INFO","T":"2024-11-25T17:24:09.087+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:24:09.090+0700","M":"Repository: Wishlist deleted successfully","id":6,"userID":4}
+{"L":"INFO","T":"2024-11-25T17:24:09.091+0700","M":"Request processed","method":"DELETE","url":"/api/products/wishlist/6","duration":"6.485ms"}
+{"L":"INFO","T":"2024-11-25T17:25:01.393+0700","M":"Request received","method":"GET","url":"/api/products/5"}
+{"L":"INFO","T":"2024-11-25T17:25:01.393+0700","M":"Handler: Received request","method":"GET","path":"/api/products/5"}
+{"L":"INFO","T":"2024-11-25T17:25:01.395+0700","M":"Request processed","method":"GET","url":"/api/products/5","duration":"2.4257ms"}
+{"L":"INFO","T":"2024-11-25T17:25:16.928+0700","M":"Request received","method":"GET","url":"/api/account/address"}
+{"L":"DEBUG","T":"2024-11-25T17:25:16.928+0700","M":"Middleware: Processing request","path":"/api/account/address"}
+{"L":"WARN","T":"2024-11-25T17:25:16.929+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:25:16.929+0700","M":"Request processed","method":"GET","url":"/api/account/address","duration":"1.2736ms"}
+{"L":"INFO","T":"2024-11-25T17:25:28.708+0700","M":"Request received","method":"GET","url":"/api/account/address"}
+{"L":"DEBUG","T":"2024-11-25T17:25:28.708+0700","M":"Middleware: Processing request","path":"/api/account/address"}
+{"L":"INFO","T":"2024-11-25T17:25:28.709+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:25:28.709+0700","M":"Handler: Received request","method":"GET","path":"/api/account/address"}
+{"L":"INFO","T":"2024-11-25T17:25:28.710+0700","M":"Request processed","method":"GET","url":"/api/account/address","duration":"1.9633ms"}
+{"L":"INFO","T":"2024-11-25T17:25:52.202+0700","M":"Request received","method":"POST","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:25:52.202+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"WARN","T":"2024-11-25T17:25:52.203+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:25:52.204+0700","M":"Request processed","method":"POST","url":"/api/products/carts","duration":"2.043ms"}
+{"L":"INFO","T":"2024-11-25T17:26:03.206+0700","M":"Request received","method":"POST","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:26:03.206+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:26:03.207+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:26:03.207+0700","M":"Handler: Received request","method":"POST","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:26:03.213+0700","M":"Repository: cart added successfully","id":14}
+{"L":"INFO","T":"2024-11-25T17:26:03.213+0700","M":"Request processed","method":"POST","url":"/api/products/carts","duration":"6.4894ms"}
+{"L":"INFO","T":"2024-11-25T17:26:16.927+0700","M":"Request received","method":"GET","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:26:16.928+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:26:16.928+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:26:16.928+0700","M":"Handler: Received request","method":"GET","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:26:16.929+0700","M":"Request processed","method":"GET","url":"/api/products/carts","duration":"2.0773ms"}
+{"L":"INFO","T":"2024-11-25T17:26:40.392+0700","M":"Request received","method":"POST","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:26:40.392+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:26:40.393+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:26:40.393+0700","M":"Handler: Received request","method":"POST","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:26:40.395+0700","M":"Repository: cart added successfully","id":14}
+{"L":"INFO","T":"2024-11-25T17:26:40.395+0700","M":"Request processed","method":"POST","url":"/api/products/carts","duration":"3.912ms"}
+{"L":"INFO","T":"2024-11-25T17:26:45.303+0700","M":"Request received","method":"GET","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:26:45.303+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:26:45.305+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:26:45.305+0700","M":"Handler: Received request","method":"GET","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:26:45.308+0700","M":"Request processed","method":"GET","url":"/api/products/carts","duration":"5.3951ms"}
+{"L":"INFO","T":"2024-11-25T17:27:20.528+0700","M":"Request received","method":"DELETE","url":"/api/products/carts/14"}
+{"L":"DEBUG","T":"2024-11-25T17:27:20.528+0700","M":"Middleware: Processing request","path":"/api/products/carts/14"}
+{"L":"WARN","T":"2024-11-25T17:27:20.529+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:27:20.529+0700","M":"Request processed","method":"DELETE","url":"/api/products/carts/14","duration":"1.2543ms"}
+{"L":"INFO","T":"2024-11-25T17:27:28.165+0700","M":"Request received","method":"DELETE","url":"/api/products/carts/14"}
+{"L":"DEBUG","T":"2024-11-25T17:27:28.165+0700","M":"Middleware: Processing request","path":"/api/products/carts/14"}
+{"L":"INFO","T":"2024-11-25T17:27:28.166+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:27:28.168+0700","M":"Repository: Cart deleted successfully","id":14,"userID":4}
+{"L":"INFO","T":"2024-11-25T17:27:28.168+0700","M":"Request processed","method":"DELETE","url":"/api/products/carts/14","duration":"3.0361ms"}
+{"L":"INFO","T":"2024-11-25T17:27:35.161+0700","M":"Request received","method":"GET","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:27:35.161+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:27:35.162+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:27:35.162+0700","M":"Handler: Received request","method":"GET","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:27:35.163+0700","M":"Request processed","method":"GET","url":"/api/products/carts","duration":"2.0213ms"}
+{"L":"INFO","T":"2024-11-25T17:27:53.125+0700","M":"Request received","method":"POST","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:27:53.126+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:27:53.127+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:27:53.127+0700","M":"Handler: Received request","method":"POST","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:27:53.131+0700","M":"Repository: cart added successfully","id":16}
+{"L":"INFO","T":"2024-11-25T17:27:53.131+0700","M":"Request processed","method":"POST","url":"/api/products/carts","duration":"6.1098ms"}
+{"L":"INFO","T":"2024-11-25T17:27:54.261+0700","M":"Request received","method":"POST","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:27:54.261+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:27:54.263+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:27:54.263+0700","M":"Handler: Received request","method":"POST","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:27:54.268+0700","M":"Repository: cart added successfully","id":16}
+{"L":"INFO","T":"2024-11-25T17:27:54.268+0700","M":"Request processed","method":"POST","url":"/api/products/carts","duration":"6.7954ms"}
+{"L":"INFO","T":"2024-11-25T17:27:59.402+0700","M":"Request received","method":"GET","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:27:59.402+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:27:59.403+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:27:59.403+0700","M":"Handler: Received request","method":"GET","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:27:59.404+0700","M":"Request processed","method":"GET","url":"/api/products/carts","duration":"2.0188ms"}
+{"L":"INFO","T":"2024-11-25T17:28:32.431+0700","M":"Request received","method":"PUT","url":"/api/products/carts/16"}
+{"L":"DEBUG","T":"2024-11-25T17:28:32.431+0700","M":"Middleware: Processing request","path":"/api/products/carts/16"}
+{"L":"WARN","T":"2024-11-25T17:28:32.432+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:28:32.432+0700","M":"Request processed","method":"PUT","url":"/api/products/carts/16","duration":"1.0267ms"}
+{"L":"INFO","T":"2024-11-25T17:28:39.544+0700","M":"Request received","method":"PUT","url":"/api/products/carts/16"}
+{"L":"DEBUG","T":"2024-11-25T17:28:39.544+0700","M":"Middleware: Processing request","path":"/api/products/carts/16"}
+{"L":"INFO","T":"2024-11-25T17:28:39.545+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:28:39.545+0700","M":"Handler: Received request","method":"PUT","path":"/api/products/carts/16"}
+{"L":"INFO","T":"2024-11-25T17:28:39.546+0700","M":"Repository: cart quantity updated successfully","id":16}
+{"L":"INFO","T":"2024-11-25T17:28:39.546+0700","M":"Request processed","method":"PUT","url":"/api/products/carts/16","duration":"2.8479ms"}
+{"L":"INFO","T":"2024-11-25T17:28:50.014+0700","M":"Request received","method":"GET","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:28:50.015+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:28:50.016+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:28:50.017+0700","M":"Handler: Received request","method":"GET","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:28:50.018+0700","M":"Request processed","method":"GET","url":"/api/products/carts","duration":"4.6806ms"}
+{"L":"INFO","T":"2024-11-25T17:29:05.448+0700","M":"Request received","method":"PUT","url":"/api/products/carts/16"}
+{"L":"DEBUG","T":"2024-11-25T17:29:05.449+0700","M":"Middleware: Processing request","path":"/api/products/carts/16"}
+{"L":"INFO","T":"2024-11-25T17:29:05.451+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:29:05.452+0700","M":"Handler: Received request","method":"PUT","path":"/api/products/carts/16"}
+{"L":"INFO","T":"2024-11-25T17:29:05.456+0700","M":"Repository: cart item deleted successfully","id":16}
+{"L":"INFO","T":"2024-11-25T17:29:05.456+0700","M":"Request processed","method":"PUT","url":"/api/products/carts/16","duration":"7.8982ms"}
+{"L":"INFO","T":"2024-11-25T17:29:18.451+0700","M":"Request received","method":"GET","url":"/api/products/total-carts"}
+{"L":"DEBUG","T":"2024-11-25T17:29:18.451+0700","M":"Middleware: Processing request","path":"/api/products/total-carts"}
+{"L":"WARN","T":"2024-11-25T17:29:18.452+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:29:18.453+0700","M":"Request processed","method":"GET","url":"/api/products/total-carts","duration":"1.1383ms"}
+{"L":"INFO","T":"2024-11-25T17:29:26.763+0700","M":"Request received","method":"GET","url":"/api/products/total-carts"}
+{"L":"DEBUG","T":"2024-11-25T17:29:26.763+0700","M":"Middleware: Processing request","path":"/api/products/total-carts"}
+{"L":"INFO","T":"2024-11-25T17:29:26.763+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:29:26.764+0700","M":"Handler: Received request","method":"GET","path":"/api/products/total-carts"}
+{"L":"INFO","T":"2024-11-25T17:29:26.764+0700","M":"Request processed","method":"GET","url":"/api/products/total-carts","duration":"1.468ms"}
+{"L":"INFO","T":"2024-11-25T17:29:50.020+0700","M":"Request received","method":"POST","url":"/api/products/orders"}
+{"L":"DEBUG","T":"2024-11-25T17:29:50.021+0700","M":"Middleware: Processing request","path":"/api/products/orders"}
+{"L":"WARN","T":"2024-11-25T17:29:50.022+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:29:50.022+0700","M":"Request processed","method":"POST","url":"/api/products/orders","duration":"1.2962ms"}
+{"L":"INFO","T":"2024-11-25T17:29:58.941+0700","M":"Request received","method":"POST","url":"/api/products/orders"}
+{"L":"DEBUG","T":"2024-11-25T17:29:58.941+0700","M":"Middleware: Processing request","path":"/api/products/orders"}
+{"L":"INFO","T":"2024-11-25T17:29:58.941+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:29:58.942+0700","M":"Handler: Received request","method":"POST","path":"/api/products/orders"}
+{"L":"INFO","T":"2024-11-25T17:29:58.942+0700","M":"Handler: Decoded request data","address_index":0}
+{"L":"INFO","T":"2024-11-25T17:29:58.946+0700","M":"Repository: Fetching shipping address","user_id":4,"address_index":0,"address shipping":"101 Maple St, Citycenter"}
+{"L":"INFO","T":"2024-11-25T17:29:58.948+0700","M":"Repository: Executing query insert order","user_id":4,"address_index":0,"address shipping":"101 Maple St, Citycenter"}
+{"L":"ERROR","T":"2024-11-25T17:29:58.948+0700","M":"Repository: failed to create order","error":"sql: no rows in result set"}
+{"L":"ERROR","T":"2024-11-25T17:29:58.948+0700","M":"Handler: failed to create order","error":"failed to create order: sql: no rows in result set"}
+{"L":"INFO","T":"2024-11-25T17:29:58.949+0700","M":"Request processed","method":"POST","url":"/api/products/orders","duration":"8.3889ms"}
+{"L":"INFO","T":"2024-11-25T17:31:00.396+0700","M":"Request received","method":"POST","url":"/api/products/carts"}
+{"L":"DEBUG","T":"2024-11-25T17:31:00.396+0700","M":"Middleware: Processing request","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:31:00.396+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:31:00.397+0700","M":"Handler: Received request","method":"POST","path":"/api/products/carts"}
+{"L":"INFO","T":"2024-11-25T17:31:00.401+0700","M":"Repository: cart added successfully","id":18}
+{"L":"INFO","T":"2024-11-25T17:31:00.401+0700","M":"Request processed","method":"POST","url":"/api/products/carts","duration":"5.3731ms"}
+{"L":"INFO","T":"2024-11-25T17:31:30.721+0700","M":"Request received","method":"POST","url":"/api/products/orders"}
+{"L":"DEBUG","T":"2024-11-25T17:31:30.721+0700","M":"Middleware: Processing request","path":"/api/products/orders"}
+{"L":"INFO","T":"2024-11-25T17:31:30.722+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:31:30.722+0700","M":"Handler: Received request","method":"POST","path":"/api/products/orders"}
+{"L":"INFO","T":"2024-11-25T17:31:30.722+0700","M":"Handler: Decoded request data","address_index":0}
+{"L":"INFO","T":"2024-11-25T17:31:30.723+0700","M":"Repository: Fetching shipping address","user_id":4,"address_index":0,"address shipping":"101 Maple St, Citycenter"}
+{"L":"INFO","T":"2024-11-25T17:31:30.726+0700","M":"Repository: Executing query insert order","user_id":4,"address_index":0,"address shipping":"101 Maple St, Citycenter"}
+{"L":"INFO","T":"2024-11-25T17:31:30.728+0700","M":"Repository: Executing query details","user_id":4,"address_index":0,"address shipping":"101 Maple St, Citycenter"}
+{"L":"ERROR","T":"2024-11-25T17:31:30.728+0700","M":"Repository: Executing query details"}
+{"L":"INFO","T":"2024-11-25T17:31:30.729+0700","M":"Request processed","method":"POST","url":"/api/products/orders","duration":"8.0594ms"}
+{"L":"INFO","T":"2024-11-25T17:32:05.087+0700","M":"Request received","method":"GET","url":"/api/account/detail-user"}
+{"L":"DEBUG","T":"2024-11-25T17:32:05.088+0700","M":"Middleware: Processing request","path":"/api/account/detail-user"}
+{"L":"WARN","T":"2024-11-25T17:32:05.089+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:32:05.089+0700","M":"Request processed","method":"GET","url":"/api/account/detail-user","duration":"1.537ms"}
+{"L":"INFO","T":"2024-11-25T17:32:09.630+0700","M":"Request received","method":"GET","url":"/api/account/detail-user"}
+{"L":"DEBUG","T":"2024-11-25T17:32:09.631+0700","M":"Middleware: Processing request","path":"/api/account/detail-user"}
+{"L":"INFO","T":"2024-11-25T17:32:09.633+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:32:09.633+0700","M":"Handler: Received request","method":"GET","path":"/api/account/detail-user"}
+{"L":"INFO","T":"2024-11-25T17:32:09.634+0700","M":"Repository: Executing query","user_id":4}
+{"L":"DEBUG","T":"2024-11-25T17:32:09.635+0700","M":"Repository: Retrieved user details","user":{"name":"Bob Brown","email":"bob.brown@example.com","phone":"1231231234","address":["101 Maple St, Citycenter","222 Willow St, Greenfield"]}}
+{"L":"INFO","T":"2024-11-25T17:32:09.636+0700","M":"Request processed","method":"GET","url":"/api/account/detail-user","duration":"5.6478ms"}
+{"L":"INFO","T":"2024-11-25T17:32:31.777+0700","M":"Request received","method":"PUT","url":"/api/account/update-user"}
+{"L":"DEBUG","T":"2024-11-25T17:32:31.777+0700","M":"Middleware: Processing request","path":"/api/account/update-user"}
+{"L":"INFO","T":"2024-11-25T17:32:31.778+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:32:31.778+0700","M":"Handler: Received request to update user","method":"PUT","path":"/api/account/update-user"}
+{"L":"DEBUG","T":"2024-11-25T17:32:31.779+0700","M":"Repository: Updating user details","userID":4,"name":"Bob Gold","email":"bob.gold@example.com"}
+{"L":"DEBUG","T":"2024-11-25T17:32:31.785+0700","M":"Repository: User details updated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:32:31.785+0700","M":"Handler: User updated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:32:31.785+0700","M":"Request processed","method":"PUT","url":"/api/account/update-user","duration":"8.9146ms"}
+{"L":"INFO","T":"2024-11-25T17:32:50.108+0700","M":"Request received","method":"PUT","url":"/api/account/address"}
+{"L":"DEBUG","T":"2024-11-25T17:32:50.108+0700","M":"Middleware: Processing request","path":"/api/account/address"}
+{"L":"WARN","T":"2024-11-25T17:32:50.108+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:32:50.109+0700","M":"Request processed","method":"PUT","url":"/api/account/address","duration":"1.0686ms"}
+{"L":"INFO","T":"2024-11-25T17:32:57.523+0700","M":"Request received","method":"PUT","url":"/api/account/address"}
+{"L":"DEBUG","T":"2024-11-25T17:32:57.523+0700","M":"Middleware: Processing request","path":"/api/account/address"}
+{"L":"INFO","T":"2024-11-25T17:32:57.524+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:32:57.524+0700","M":"Handler: Received request to update user","method":"PUT","path":"/api/account/address"}
+{"L":"DEBUG","T":"2024-11-25T17:32:57.525+0700","M":"Repository: Updating user details","userID":4,"address":["111 Maple St, Citycenter","122 Willow St, Greenfield"]}
+{"L":"DEBUG","T":"2024-11-25T17:32:57.526+0700","M":"Repository: User details updated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:32:57.526+0700","M":"Handler: User updated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:32:57.526+0700","M":"Request processed","method":"PUT","url":"/api/account/address","duration":"2.9552ms"}
+{"L":"INFO","T":"2024-11-25T17:33:20.825+0700","M":"Request received","method":"POST","url":"/api/account/address"}
+{"L":"DEBUG","T":"2024-11-25T17:33:20.826+0700","M":"Middleware: Processing request","path":"/api/account/address"}
+{"L":"WARN","T":"2024-11-25T17:33:20.826+0700","M":"Middleware: Invalid or expired token","error":"invalid or expired token"}
+{"L":"INFO","T":"2024-11-25T17:33:20.827+0700","M":"Request processed","method":"POST","url":"/api/account/address","duration":"1.8579ms"}
+{"L":"INFO","T":"2024-11-25T17:33:26.656+0700","M":"Request received","method":"POST","url":"/api/account/address"}
+{"L":"DEBUG","T":"2024-11-25T17:33:26.657+0700","M":"Middleware: Processing request","path":"/api/account/address"}
+{"L":"INFO","T":"2024-11-25T17:33:26.657+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:33:26.658+0700","M":"Handler: Received request to create address","method":"POST","path":"/api/account/address"}
+{"L":"INFO","T":"2024-11-25T17:33:26.659+0700","M":"Handler: Address created successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:33:26.659+0700","M":"Request processed","method":"POST","url":"/api/account/address","duration":"3.4254ms"}
+{"L":"INFO","T":"2024-11-25T17:33:37.467+0700","M":"Request received","method":"GET","url":"/api/account/address"}
+{"L":"DEBUG","T":"2024-11-25T17:33:37.468+0700","M":"Middleware: Processing request","path":"/api/account/address"}
+{"L":"INFO","T":"2024-11-25T17:33:37.469+0700","M":"Middleware: Token validated successfully","userID":4}
+{"L":"INFO","T":"2024-11-25T17:33:37.469+0700","M":"Handler: Received request","method":"GET","path":"/api/account/address"}
+{"L":"INFO","T":"2024-11-25T17:33:37.469+0700","M":"Request processed","method":"GET","url":"/api/account/address","duration":"2.6184ms"}
